@@ -1,8 +1,0 @@
-c9a3e68e-a4ea-4d41-887c-7472ee87f473
-
-
- ./waved -oidc-client-id wave \
-  -oidc-client-secret c9a3e68e-a4ea-4d41-887c-7472ee87f473 \
-  -oidc-end-session-url http://localhost:8080/auth/realms/master/protocol/openid-connect/logout \
-  -oidc-provider-url http://localhost:8080/auth/realms/master \
-  -oidc-redirect-url http://localhost:10101/_auth/callback
