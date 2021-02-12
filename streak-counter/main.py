@@ -70,22 +70,32 @@ class StopWatch:
         self.total_seconds = int(time_hr[6:])
 
     async def update_df(self, q: Q):
-        duration = int((datetime.strptime(self.last_stop, '%Y-%m-%d %H:%M:%S') -
-                        datetime.strptime(self.last_start, '%Y-%m-%d %H:%M:%S')).total_seconds())
+        duration = round(int((datetime.strptime(self.last_stop, '%Y-%m-%d %H:%M:%S') -
+                              datetime.strptime(self.last_start, '%Y-%m-%d %H:%M:%S')).total_seconds()) / 60, 2)
         df2 = pd.DataFrame({
             'Started': [self.last_start],
             'Ended': [self.last_stop],
             'Duration': [duration],
-            'Scores': [round(duration / 3600, 2)]
+            'Scores': [duration if duration > 1 else 1]
         })
 
         self.df = self.df.append(df2, ignore_index=True)
         q.page['history'].items[0].table.rows = [ui.table_row(
-                name=str(row.Index + 1),
-                cells=[str(row.Index + 1), row.Started, row.Ended, str(row.Duration), str(row.Scores)]
-            ) for row in self.df.itertuples()]
+            name=str(row.Index + 1),
+            cells=[str(row.Index + 1), row.Started, row.Ended, str(row.Duration), str(row.Scores)]
+        ) for row in self.df.itertuples()]
 
         q.page['LeaderBoard'].items[0].text_xl.content = f"Your Total Score: {self.df['Scores'].sum()}"
+
+        q.app.lb_dict[q.auth.username] = self.df['Scores'].sum()
+
+        await q.page.save()
+
+    async def update_lb(self, q: Q):
+        q.page['LeaderBoard'].items[2].table.rows = [ui.table_row(
+            name=user,
+            cells=[user, str(score)]
+        ) for user, score in q.app.lb_dict.items()]
         await q.page.save()
 
 
@@ -96,7 +106,7 @@ async def serve(q: Q):
             ui.table_column(name='Index', label='Index', searchable=True, sortable=True, data_type='number'),
             ui.table_column(name='Started', label='Started', searchable=True),
             ui.table_column(name='Ended', label='Ended', searchable=True),
-            ui.table_column(name='Duration', label='Duration (sec)', data_type='number'),
+            ui.table_column(name='Duration', label='Duration (mins)', data_type='number'),
             ui.table_column(name='Scores', label='Scores', data_type='number'),
         ]
 
@@ -106,6 +116,9 @@ async def serve(q: Q):
             ui.table_column(name='Scores', label='Scores', searchable=True, max_width='100px', sortable=True),
         ]
 
+    if not q.app.lb_dict:
+        q.app.lb_dict = dict()
+
     if not q.user.stop_watch:
         q.user.stop_watch = StopWatch()
 
@@ -114,10 +127,12 @@ async def serve(q: Q):
     elif q.args.stop and q.user.stop_watch.active:
         await q.user.stop_watch.stop(q)
         await q.user.stop_watch.update_df(q)
+        await q.user.stop_watch.update_lb(q)
 
     if not q.client.initialized:
         q.client.initialized = True
         await responsive_layout(q)
+        await q.user.stop_watch.update_lb(q)
     await q.page.save()
 
 
@@ -195,16 +210,16 @@ async def responsive_layout(q: Q):
             ui.table(
                 name='leaderboard',
                 columns=q.client.LB_columns,
-                rows=[],
-                # rows=[ui.table_row(
-                #     name=str(row.Index + 1),
-                #     cells=[str(row.Index + 1), row.Started, row.Ended, str(row.Duration), str(row.Scores)]
-                # ) for row in q.user.stop_watch.df.itertuples()],
+                rows=[ui.table_row(
+                    name=user,
+                    cells=[user, str(score)]
+                ) for user, score in q.app.lb_dict.items()],
                 groupable=False,
                 downloadable=True,
                 resettable=False,
                 height='425px'
-            )
+            ),
+            ui.link(name='logout', label='Log Out', button=True, path=f'/_logout', target='_current')
         ],
     )
     q.page['stopwatch'] = ui.form_card(
