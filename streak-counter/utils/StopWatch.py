@@ -19,7 +19,7 @@ class StopWatch:
         self.df = pd.DataFrame(columns=['Started', 'Ended', 'Duration', 'Scores'])
 
     async def start(self, q: Q):
-        await self.stop(q)
+        self.stop()
         self.active = True
         self.total_streaks += 1
 
@@ -38,16 +38,14 @@ class StopWatch:
 
             time.sleep(1)
 
-        await self.stop(q)
+        self.stop()
         await U.update_clock_msg(q, 'END')
 
-    async def stop(self, q: Q):
+    def stop(self):
         if self.active:
             self.active = False
             self.update_total_time()
             self.minutes = self.seconds = 0
-
-            await U.update_stop_streak(self, q)
 
     def update_total_time(self):
         time_hr = time.strftime(
@@ -59,7 +57,7 @@ class StopWatch:
         self.total_minutes = int(time_hr[3:5])
         self.total_seconds = int(time_hr[6:])
 
-    async def update_df(self, q: Q):
+    def update_df(self):
         duration = round(int((datetime.strptime(self.last_stop, '%Y-%m-%d %H:%M:%S') -
                               datetime.strptime(self.last_start, '%Y-%m-%d %H:%M:%S')).total_seconds()) / 60, 2)
         df2 = pd.DataFrame({
@@ -70,8 +68,3 @@ class StopWatch:
         })
 
         self.df = self.df.append(df2, ignore_index=True)
-
-        await U.update_streak_history(self, q)
-
-    async def update_lb(self, q: Q):
-        await U.update_leaderboard(q)
