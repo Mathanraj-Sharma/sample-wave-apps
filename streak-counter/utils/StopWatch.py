@@ -18,28 +18,35 @@ class StopWatch:
         self.last_stop = None
         self.df = pd.DataFrame(columns=['Started', 'Ended', 'Duration', 'Scores'])
 
-    async def start(self, q: Q):
+    async def start(self, q, test=False):
         self.stop()
         self.active = True
         self.total_streaks += 1
 
-        await U.update_start_streak(self, q)
-        await U.update_clock_msg(q, 'ON_GOING')
+        sec = 1 if test is True else 60
 
-        while self.minutes != 60 and self.active:
-            if self.seconds == 59:
+        if q:
+            await U.update_start_streak(self, q)
+            await U.update_clock_msg(q, 'ON_GOING')
+
+        while self.minutes < 60 and self.active and self.seconds < sec:
+            if self.seconds >= 59:
                 self.minutes += 1
                 self.seconds = 0
 
-                await U.update_clock(self, q)
+                if q:
+                    await U.update_clock(self, q)
             else:
                 self.seconds += 1
-                await U.update_clock(self, q)
+                if q:
+                    await U.update_clock(self, q)
 
             time.sleep(1)
 
         self.stop()
-        await U.update_clock_msg(q, 'END')
+
+        if q:
+            await U.update_clock_msg(q, 'END')
 
     def stop(self):
         if self.active:

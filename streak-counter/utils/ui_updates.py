@@ -156,7 +156,7 @@ async def responsive_layout(q: Q):
                 groupable=False,
                 downloadable=True,
                 resettable=False,
-                height='425px'
+                height='425px',
             ),
             ui.link(name='logout', label='Log Out', button=True, path=f'/_logout', target='_current')
         ],
