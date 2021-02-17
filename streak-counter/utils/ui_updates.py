@@ -6,7 +6,6 @@ from h2o_wave import Q, ui
 async def update_start_streak(sw: StopWatch, q: Q):
     q.page['UserStreaks'].data.streak_start = sw.last_start = time.strftime("%Y-%m-%d  %H:%M:%S")
     q.page['UserStreaks'].data.streak_end = 'Streak on progress...'
-    q.page['UserStreaks'].data.total_streaks = sw.total_streaks
 
     await q.page.save()
 
@@ -20,9 +19,9 @@ async def update_clock_msg(q: Q, msg):
     await q.page.save()
 
 
-async def update_clock(sw: StopWatch, q: Q):
-    q.page['stopwatch'].items[0].text_xl.content = f"<h1><center>{str(sw.minutes).zfill(2)} : \
-                        {str(sw.seconds).zfill(2)}</center></h1>"
+async def update_clock(q: Q, current_minute: int, current_sec: int):
+    q.page['stopwatch'].items[0].text_xl.content = f"<h1><center>{str(current_minute).zfill(2)} : \
+                        {str(current_sec).zfill(2)}</center></h1>"
     await q.page.save()
 
 
@@ -34,7 +33,7 @@ async def update_stop_streak(sw: StopWatch, q: Q):
 
     q.page['UserStreaks'].data.total_time = f"{str(sw.total_hours).zfill(2)} :\
                                 {str(sw.total_minutes).zfill(2)} : {str(sw.total_seconds).zfill(2)}"
-
+    q.page['UserStreaks'].data.total_streaks = sw.total_streaks
     await q.page.save()
 
 
@@ -58,6 +57,17 @@ async def update_leaderboard(q: Q):
     ) for user, score in q.app.lb_dict.items()]
 
     await q.page.save()
+
+
+async def start_clock(sw: StopWatch, q: Q):
+    async def on_clock_update(current_minute: int, current_sec: int):
+        await update_clock(q, current_minute, current_sec)
+
+    await update_start_streak(sw, q)
+    await update_clock_msg(q, 'ON_GOING')
+    await sw.start(on_update=on_clock_update, sec=10)
+    await update_stop_streak(sw, q)
+    await update_clock_msg(q, 'END')
 
 
 async def responsive_layout(q: Q):
