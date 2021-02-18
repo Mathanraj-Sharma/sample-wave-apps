@@ -3,6 +3,8 @@ from utils.StopWatch import StopWatch
 import time
 from typing import Callable
 
+callback_flag = False
+
 
 @pytest.fixture(scope="function")
 def stopwatch() -> StopWatch:
@@ -28,13 +30,17 @@ async def test_stopwatch_ends_at_expected_time(stopwatch, callback):
 
 @pytest.mark.asyncio
 async def test_stopwatch_start_callback(stopwatch):
-    flag = False
+    global callback_flag
 
     async def on_update(minutes: int, seconds: int):
-        flag = True
+        global callback_flag
+        callback_flag = True
 
     await stopwatch.start(on_update=on_update, sec=2)
-    assert flag is True
+    assert callback_flag is True
+
+    # reset callback_flag
+    callback_flag = False
 
 
 @pytest.mark.asyncio
