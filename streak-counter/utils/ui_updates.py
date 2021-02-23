@@ -65,7 +65,7 @@ async def start_clock(sw: StopWatch, q: Q):
 
     await update_start_streak(sw, q)
     await update_clock_msg(q, 'ON_GOING')
-    await sw.start(on_update=on_clock_update, sec=5)
+    await sw.start(on_update=on_clock_update)
     await update_stop_streak(sw, q)
     await update_clock_msg(q, 'END')
 
