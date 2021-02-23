@@ -65,7 +65,7 @@ async def start_clock(sw: StopWatch, q: Q):
 
     await update_start_streak(sw, q)
     await update_clock_msg(q, 'ON_GOING')
-    await sw.start(on_update=on_clock_update, sec=10)
+    await sw.start(on_update=on_clock_update, sec=5)
     await update_stop_streak(sw, q)
     await update_clock_msg(q, 'END')
 
@@ -86,7 +86,7 @@ async def responsive_layout(q: Q):
             ui.table_column(name='Scores', label='Scores', searchable=True, max_width='100px', sortable=True),
         ]
 
-    q.page['meta'] = ui.meta_card(box='', layouts=[
+    q.page['meta'] = ui.meta_card(box='', title='Streak Counter', layouts=[
         ui.layout(
             # If the viewport width >= 0:
             breakpoint='xs',
@@ -185,7 +185,7 @@ async def responsive_layout(q: Q):
                 content=f"<h1><center>{str(q.user.stop_watch.minutes).zfill(2)} : {str(q.user.stop_watch.seconds).zfill(2)}</center></h1>"
             ),
             ui.text_l(
-                content=f"<center>Lets creak some code!</center>"
+                content=f"<center>Lets crack some code!</center>"
             ),
             ui.buttons([
                 ui.button(name='start', label='Start', primary=True),
@@ -205,9 +205,9 @@ async def responsive_layout(q: Q):
         title='User Streaks',
         content="""=Last Streak Started: {{streak_start}}
 
-Last Streak Ended: {{streak_end}}
+<p data-test='UserStreaks_Last_Ended'>Last Streak Ended: {{streak_end}}</p>
 
-Total Streaks: {{total_streaks}}
+<p data-test='UserStreaks_Total_Streaks'>Total Streaks: {{total_streaks}}</p>
 
 Total Coding Time: {{total_time}}
 """,
