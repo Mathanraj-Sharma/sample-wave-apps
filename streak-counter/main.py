@@ -12,15 +12,20 @@ async def serve(q: Q):
         q.user.stop_watch = StopWatch()
 
     if q.args.start and not q.user.stop_watch.active:
-        await q.user.stop_watch.start(q)
-    elif q.args.stop and q.user.stop_watch.active:
-        q.user.stop_watch.stop()
-        await U.update_stop_streak(q.user.stop_watch, q)
+        await U.start_clock(q.user.stop_watch, q)
 
         q.user.stop_watch.update_df()
         await U.update_streak_history(q.user.stop_watch, q)
 
         await U.update_leaderboard(q)
+    elif q.args.stop and q.user.stop_watch.active:
+        q.user.stop_watch.stop()
+        await U.update_stop_streak(q.user.stop_watch, q)
+
+        # q.user.stop_watch.update_df()
+        # await U.update_streak_history(q.user.stop_watch, q)
+        #
+        # await U.update_leaderboard(q)
 
     if not q.client.initialized:
         q.client.initialized = True
